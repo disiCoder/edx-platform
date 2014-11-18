@@ -11,6 +11,7 @@ from django.http import Http404
 from django.test import TestCase
 from django.test.client import RequestFactory
 from django.core.urlresolvers import reverse
+from django.conf import settings
 from contentstore.utils import reverse_usage_url, reverse_course_url
 from contentstore.views.preview import StudioUserService
 
@@ -1202,6 +1203,42 @@ class TestComponentTemplates(CourseTestCase):
         self.assertIsNotNone(ora_template)
         self.assertEqual(ora_template.get('category'), 'openassessment')
         self.assertIsNone(ora_template.get('boilerplate_name', None))
+
+    def test_ora1_no_advance_component_button(self):
+        """
+        Test that there will be no `Advanced` button on unit page if `ALLOW_ORA1_PROBLEMS` feature flag is set to False
+        AND there are only 'combinedopenended', 'peergrading' modules in `Advanced Module List`
+        """
+        self.course.advanced_modules.extend(['combinedopenended', 'peergrading'])
+        templates = get_component_templates(self.course)
+        button_names = [template['display_name'] for template in templates]
+        self.assertNotIn('Advanced', button_names)
+
+    def test_cannot_create_ora1_problems(self):
+        """
+        Test that we can't create ORA1 problems if `ALLOW_ORA1_PROBLEMS` feature flag is set to False
+        """
+        self.course.advanced_modules.extend(['annotatable', 'combinedopenended', 'peergrading'])
+        templates = get_component_templates(self.course)
+        button_names = [template['display_name'] for template in templates]
+        self.assertIn('Advanced', button_names)
+        self.assertEqual(len(templates[0]['templates']), 1)
+        template_display_names = [template['display_name'] for template in templates[0]['templates']]
+        self.assertEqual(template_display_names, ['Annotation'])
+
+    @patch.dict(settings.FEATURES, {'ALLOW_ORA1_PROBLEMS': True})
+    def test_create_ora1_problems(self):
+        """
+        Test that we can create ORA1 problems if `ALLOW_ORA1_PROBLEMS` feature flag is set to True and `Advanced`
+        button is present.
+        """
+        self.course.advanced_modules.extend(['annotatable', 'combinedopenended', 'peergrading'])
+        templates = get_component_templates(self.course)
+        button_names = [template['display_name'] for template in templates]
+        self.assertIn('Advanced', button_names)
+        self.assertEqual(len(templates[0]['templates']), 3)
+        template_display_names = [template['display_name'] for template in templates[0]['templates']]
+        self.assertEqual(template_display_names, ['Annotation', 'Open Response Assessment', 'Peer Grading Interface'])
 
 
 class TestXBlockInfo(ItemTest):

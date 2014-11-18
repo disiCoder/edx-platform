@@ -107,6 +107,9 @@ FEATURES = {
 
     # Modulestore to use for new courses
     'DEFAULT_STORE_FOR_NEW_COURSE': None,
+
+    # Enable/Disable Creation of ORA1 Problems
+    'ALLOW_ORA1_PROBLEMS': False,
 }
 ENABLE_JASMINE = False
 

@@ -4,6 +4,7 @@
 
 import copy
 import mock
+from mock import patch
 import shutil
 import lxml
 
@@ -536,6 +537,7 @@ class MiscCourseTests(ContentStoreTestCase):
         for expected in expected_types:
             self.assertIn(expected, resp.content)
 
+    @patch.dict(settings.FEATURES, {'ALLOW_ORA1_PROBLEMS': True})
     def test_advanced_components_in_edit_unit(self):
         # This could be made better, but for now let's just assert that we see the advanced modules mentioned in the page
         # response HTML

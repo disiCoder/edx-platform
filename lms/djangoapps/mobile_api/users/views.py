@@ -3,9 +3,9 @@ Views for user API
 """
 from courseware.model_data import FieldDataCache
 from courseware.module_render import get_module_for_descriptor
-from util.json_request import JsonResponse
+from util.json_request import JsonResponse, JsonResponseBadRequest
 
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponse, HttpResponseForbidden
 from django.shortcuts import redirect
 
 from rest_framework import generics, permissions, views
@@ -17,6 +17,7 @@ from courseware import access
 from courseware.views import get_current_child, save_position_from_leaf
 
 from opaque_keys.edx.keys import CourseKey, UsageKey
+from opaque_keys import InvalidKeyError
 
 from student.models import CourseEnrollment, User
 
@@ -26,7 +27,7 @@ from xmodule.modulestore.django import modulestore
 
 
 from .serializers import CourseEnrollmentSerializer, UserSerializer
-
+from mobile_api import errors
 
 STANDARD_HIERARCHY_DEPTH = 2
 
@@ -113,18 +114,16 @@ class UserCourseStatus(views.APIView):
         does the work specific to the individual case
         """
         if username != request.user.username:
-            return HttpResponseForbidden("Unauthorized")
-        course_key = None
-        if course_id:
-            course_key = CourseKey.from_string(course_id)
-            course = modulestore().get_course(course_key, depth=None)
-        else:
-            return HttpResponseBadRequest("Required argument 'course_id' not specified")
+            return HttpResponseForbidden()
 
-        if not course_key:
-            return HttpResponseBadRequest("Course key could not be extracted for course_id")
+        try:
+            course_key = CourseKey.from_string(course_id)
+        except InvalidKeyError:
+            return JsonResponseBadRequest(errors.ERROR_INVALID_COURSE_ID)
+
+        course = modulestore().get_course(course_key, depth=None)
         if not course:
-            return HttpResponseBadRequest("Course not found")
+            return JsonResponseBadRequest(errors.ERROR_INVALID_COURSE_ID)
 
         return body(course_key, course)
 
@@ -168,7 +167,7 @@ class UserCourseStatus(views.APIView):
             save_position_from_leaf(request.user, request, field_data_cache, course_module)
             return HttpResponse(status=204)
         else:
-            return HttpResponseBadRequest("Could not find module for module_id")
+            return JsonResponseBadRequest(errors.ERROR_INVALID_MODULE_ID)
 
     def post(self, request, username, course_id):
         """
@@ -194,7 +193,10 @@ class UserCourseStatus(views.APIView):
             module_id = request.DATA["last_visited_module_id"]
 
             if module_id:
-                module_key = UsageKey.from_string(module_id)
+                try:
+                    module_key = UsageKey.from_string(module_id)
+                except InvalidKeyError:
+                    return JsonResponseBadRequest(errors.ERROR_INVALID_MODULE_ID)
                 return self._update_last_visited_module_id(request, course_key, course, module_key)
             else:
                 # The arguments are optional, so if there's no argument just succeed

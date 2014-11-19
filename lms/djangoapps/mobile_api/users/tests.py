@@ -13,6 +13,7 @@ from xmodule.modulestore.django import modulestore
 from courseware.tests.factories import UserFactory
 from django.core.urlresolvers import reverse
 from mobile_api.users.serializers import CourseEnrollmentSerializer
+from mobile_api import errors
 from student.models import CourseEnrollment
 from student import auth
 from mobile_api.tests import ROLE_CASES
@@ -169,7 +170,9 @@ class TestUserApi(ModuleStoreTestCase, APITestCase):
         self.client.login(username=self.username, password=self.password)
         url = reverse('user-course-status', kwargs={'username': self.username, 'course_id': 'a/b/c'})
         response = self.client.get(url)
+        json_data = json.loads(response.content)
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(json_data, errors.ERROR_INVALID_COURSE_ID)
 
     def test_course_status_wrong_user(self):
         url = reverse('user-course-status', kwargs={'username': 'other_user', 'course_id': unicode(self.course.id)})
@@ -215,4 +218,18 @@ class TestUserApi(ModuleStoreTestCase, APITestCase):
         json_data = json.loads(result.content)
         self.assertTrue(result.status_code, 200)
         self.assertEqual(json_data["last_visited_module_id"], unicode(other_unit.location))
+
+    def test_course_update_bad_module(self):
+        (_, _, _, other_unit) = self._setup_course_skeleton()
+        self.client.login(username=self.username, password=self.password)
+
+        url = self._course_status_url()
+        result = self.client.post(
+            url,
+            {"last_visited_module_id": "abc"}
+        )
+        json_data = json.loads(result.content)
+        self.assertEqual(result.status_code, 400)
+        self.assertEqual(json_data, errors.ERROR_INVALID_MODULE_ID)
+
 

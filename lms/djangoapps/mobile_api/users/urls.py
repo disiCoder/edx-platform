@@ -12,7 +12,7 @@ urlpatterns = patterns(
     'mobile_api.users.views',
     url('^' + USERNAME_PATTERN + '$', UserDetail.as_view(), name='user-detail'),
     url(
-        '^' + USERNAME_PATTERN + r'/course_enrollments/$',
+        '^' + USERNAME_PATTERN + '/course_enrollments/$',
         UserCourseEnrollmentsList.as_view(),
         name='courseenrollment-detail'
     ),

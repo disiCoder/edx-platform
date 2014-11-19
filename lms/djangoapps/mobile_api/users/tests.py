@@ -206,14 +206,13 @@ class TestUserApi(ModuleStoreTestCase, APITestCase):
         self.client.login(username=self.username, password=self.password)
 
         url = self._course_status_url()
-        result = self.client.put(
+        result = self.client.post(
             url,
-            content_type="application/x-www-form-urlencoded",
-            body={"last_visited_module_id": other_unit.location}
+            {"last_visited_module_id": other_unit.location}
         )
         self.assertTrue(result.status_code, 204)
-
         result = self.client.get(url)
         json_data = json.loads(result.content)
         self.assertTrue(result.status_code, 200)
-        self.assertTrue(json_data["last_visited_module_id"], other_unit.location)
+        self.assertEqual(json_data["last_visited_module_id"], unicode(other_unit.location))
+

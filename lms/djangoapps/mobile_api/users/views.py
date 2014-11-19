@@ -98,15 +98,11 @@ class UserCourseStatus(views.APIView):
         course_module = get_module_for_descriptor(request.user, request, course, field_data_cache, course_key)
         current = course_module
 
-        for i in range(0, STANDARD_HIERARCHY_DEPTH):
-            child = None
-            if current:
-                child = get_current_child(current, min_depth=STANDARD_HIERARCHY_DEPTH - i)
-
-            if next:
+        child = current
+        while child:
+            child = get_current_child(current)
+            if child:
                 current = child
-            else:
-                break
 
         return current
 

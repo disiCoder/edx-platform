@@ -191,7 +191,7 @@ class UserCourseStatus(views.APIView):
             """
             Updates the course_status once the arguments are checked
             """
-            module_id = request.POST.get("last_visited_module_id")
+            module_id = request.DATA["last_visited_module_id"]
 
             if module_id:
                 module_key = UsageKey.from_string(module_id)

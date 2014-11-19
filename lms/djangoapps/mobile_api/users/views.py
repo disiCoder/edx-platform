@@ -10,6 +10,7 @@ from django.shortcuts import redirect
 from rest_framework import generics, permissions, views
 from rest_framework.authentication import OAuth2Authentication, SessionAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -87,6 +88,8 @@ class UserCourseStatus(views.APIView):
     about a user's status within a given course.
     Supports get and post
     """
+
+    http_method_names = ["get", "patch"]
 
     def _last_visited_module_id(self, request, course_key, course):
         """
@@ -169,7 +172,7 @@ class UserCourseStatus(views.APIView):
         else:
             return Response(errors.ERROR_INVALID_MODULE_ID, status=400)
 
-    def post(self, request, username, course_id):
+    def patch(self, request, username, course_id):
         """
         **Use Case**
 
@@ -190,7 +193,7 @@ class UserCourseStatus(views.APIView):
             """
             Updates the course_status once the arguments are checked
             """
-            module_id = request.DATA["last_visited_module_id"]
+            module_id = request.DATA.get("last_visited_module_id")
 
             if module_id:
                 try:

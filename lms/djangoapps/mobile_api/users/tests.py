@@ -209,7 +209,7 @@ class TestUserApi(ModuleStoreTestCase, APITestCase):
         self.client.login(username=self.username, password=self.password)
 
         url = self._course_status_url()
-        result = self.client.post(
+        result = self.client.patch(
             url,
             {"last_visited_module_id": unicode(other_unit.location)}
         )
@@ -224,9 +224,9 @@ class TestUserApi(ModuleStoreTestCase, APITestCase):
         self.client.login(username=self.username, password=self.password)
 
         url = self._course_status_url()
-        result = self.client.post(
+        result = self.client.patch(
             url,
-            {"last_visited_module_id": "abc"}
+            {"last_visited_module_id": "abc"},
         )
         json_data = json.loads(result.content)
         self.assertEqual(result.status_code, 400)

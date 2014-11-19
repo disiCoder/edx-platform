@@ -211,7 +211,7 @@ class TestUserApi(ModuleStoreTestCase, APITestCase):
         url = self._course_status_url()
         result = self.client.post(
             url,
-            {"last_visited_module_id": other_unit.location}
+            {"last_visited_module_id": unicode(other_unit.location)}
         )
         self.assertTrue(result.status_code, 204)
         result = self.client.get(url)

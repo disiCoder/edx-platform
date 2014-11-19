@@ -3,15 +3,15 @@ Views for user API
 """
 from courseware.model_data import FieldDataCache
 from courseware.module_render import get_module_for_descriptor
-from util.json_request import JsonResponse, JsonResponseBadRequest
 
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponse
 from django.shortcuts import redirect
 
 from rest_framework import generics, permissions, views
 from rest_framework.authentication import OAuth2Authentication, SessionAuthentication
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from courseware import access
 from courseware.views import get_current_child, save_position_from_leaf
@@ -119,11 +119,11 @@ class UserCourseStatus(views.APIView):
         try:
             course_key = CourseKey.from_string(course_id)
         except InvalidKeyError:
-            return JsonResponseBadRequest(errors.ERROR_INVALID_COURSE_ID)
+            return Response(errors.ERROR_INVALID_COURSE_ID, status=400)
 
         course = modulestore().get_course(course_key, depth=None)
         if not course:
-            return JsonResponseBadRequest(errors.ERROR_INVALID_COURSE_ID)
+            return Response(errors.ERROR_INVALID_COURSE_ID, status=400)
 
         return body(course_key, course)
 
@@ -148,10 +148,10 @@ class UserCourseStatus(views.APIView):
             """
             current_module = self._last_visited_module_id(request, course_key, course)
             if current_module:
-                return JsonResponse({"last_visited_module_id": unicode(current_module.location)})
+                return Response({"last_visited_module_id": unicode(current_module.location)})
             else:
                 # We shouldn't end up in this case, but if we do, return something reasonable
-                return JsonResponse({"last_visited_module_id": unicode(course.location)})
+                return Response({"last_visited_module_id": unicode(course.location)})
 
         return self._process_arguments(request, username, course_id, body)
 
@@ -167,7 +167,7 @@ class UserCourseStatus(views.APIView):
             save_position_from_leaf(request.user, request, field_data_cache, course_module)
             return HttpResponse(status=204)
         else:
-            return JsonResponseBadRequest(errors.ERROR_INVALID_MODULE_ID)
+            return Response(errors.ERROR_INVALID_MODULE_ID, status=400)
 
     def post(self, request, username, course_id):
         """
@@ -196,7 +196,7 @@ class UserCourseStatus(views.APIView):
                 try:
                     module_key = UsageKey.from_string(module_id)
                 except InvalidKeyError:
-                    return JsonResponseBadRequest(errors.ERROR_INVALID_MODULE_ID)
+                    return Response(errors.ERROR_INVALID_MODULE_ID, status=400)
                 return self._update_last_visited_module_id(request, course_key, course, module_key)
             else:
                 # The arguments are optional, so if there's no argument just succeed

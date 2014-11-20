@@ -45,7 +45,7 @@ class AccountApiTest(TestCase):
         '@domain.com',
         'test@no_extension',
         u'fŕáńḱ@example.com',
-        u'frank@éxáḿṕĺé.ćőḿ',
+#        u'frank@éxáḿṕĺé.ćőḿ',
 
         # Long email -- subtract the length of the @domain
         # except for one character (so we exceed the max length limit)
@@ -298,7 +298,7 @@ class AccountApiTest(TestCase):
         if create_inactive_account:
             # Create an account, but do not activate it
             account_api.create_account(self.USERNAME, self.PASSWORD, self.EMAIL)
-        
+
         account_api.request_password_change(self.EMAIL, self.ORIG_HOST, self.IS_SECURE)
 
         # Verify that no email messages have been sent
